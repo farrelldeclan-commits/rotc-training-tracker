@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROTC Training Tracker</title>
+<style>
+  :root { --bg:#f4f6f8; --card:#fff; --text:#18212b; --muted:#68737d; --accent:#1f4d3a; --border:#dce2e7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--accent); color:white; padding:28px 20px; }
+  header h1 { margin:0 0 6px; font-size:28px; }
+  header p { margin:0; opacity:.9; }
+  main { max-width:1050px; margin:24px auto; padding:0 16px 40px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .stat { font-size:30px; font-weight:700; margin-top:8px; }
+  .muted { color:var(--muted); font-size:14px; }
+  h2 { margin:28px 0 12px; font-size:21px; }
+  label { display:block; font-weight:600; margin:12px 0 6px; }
+  input, textarea, select, button { width:100%; font:inherit; }
+  input, textarea, select { padding:10px 11px; border:1px solid var(--border); border-radius:9px; background:white; }
+  textarea { min-height:80px; resize:vertical; }
+  button { border:0; border-radius:9px; padding:11px 14px; cursor:pointer; font-weight:700; }
+  .primary { background:var(--accent); color:white; }
+  .secondary { background:#e8edf0; color:var(--text); }
+  .danger { background:#f4dede; color:#7c2222; }
+  .row { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:14px; }
+  .progress { height:12px; background:#e8ecef; border-radius:99px; overflow:hidden; margin-top:8px; }
+  .bar { height:100%; width:0%; background:var(--accent); transition:width .2s; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--border); }
+  .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#e9f0ec; color:var(--accent); font-weight:700; font-size:12px; }
+  .notice { background:#fff8df; border:1px solid #eadca4; padding:12px; border-radius:10px; color:#5f531f; margin-top:12px; font-size:14px; }
+  @media(max-width:650px){ .row,.actions{grid-template-columns:1fr;} th:nth-child(5),td:nth-child(5){display:none;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>ROTC Training Tracker</h1>
+  <p>Track your training, build consistency, and monitor your PFT preparation.</p>
+</header>
+
+<main>
+  <section class="grid">
+    <div class="card"><div class="muted">Training Days</div><div class="stat" id="days">0</div></div>
+    <div class="card"><div class="muted">Push-ups Logged</div><div class="stat" id="pushTotal">0</div></div>
+    <div class="card"><div class="muted">Pull-ups Logged</div><div class="stat" id="pullTotal">0</div></div>
+    <div class="card"><div class="muted">Miles Run</div><div class="stat" id="mileTotal">0</div></div>
+  </section>
+
+  <h2>Today's Training</h2>
+  <section class="card">
+    <div class="row">
+      <div>
+        <label for="date">Date</label>
+        <input id="date" type="date">
+      </div>
+      <div>
+        <label for="workout">Workout</label>
+        <select id="workout">
+          <option>Push-up / Pull-up Volume</option>
+          <option>Speed Run</option>
+          <option>Strength + Calisthenics</option>
+          <option>Tempo Run</option>
+          <option>Easy Run</option>
+          <option>PFT Practice</option>
+          <option>Rest Day</option>
+          <option>Active Recovery</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="push">Push-ups</label>
+        <input id="push" type="number" min="0" placeholder="e.g. 80">
+      </div>
+      <div>
+        <label for="pull">Pull-ups</label>
+        <input id="pull" type="number" min="0" placeholder="e.g. 40">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="miles">Miles</label>
+        <input id="miles" type="number" min="0" step="0.01" placeholder="e.g. 2.5">
+      </div>
+      <div>
+        <label for="plank">Plank (seconds)</label>
+        <input id="plank" type="number" min="0" placeholder="e.g. 120">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="runTime">Run Time</label>
+        <input id="runTime" type="text" placeholder="e.g. 24:30">
+      </div>
+      <div>
+        <label for="rpe">How hard did it feel? (1–10)</label>
+        <input id="rpe" type="number" min="1" max="10" placeholder="1–10">
+      </div>
+    </div>
+
+    <label for="notes">Notes</label>
+    <textarea id="notes" placeholder="How did the workout feel? Any wins or things to work on?"></textarea>
+
+    <div class="actions">
+      <button class="primary" onclick="saveEntry()">Save Day</button>
+      <button class="secondary" onclick="clearForm()">Clear</button>
+      <button class="danger" onclick="clearAll()">Reset Data</button>
+    </div>
+
+    <div class="notice">Training note: this tracker is for logging progress. Don't force reps through persistent pain or train hard every day without recovery.</div>
+    <div class="notice" style="background:#eef5f1;border-color:#c9ddd2;color:#294c3c">
+      <b>Rest / recovery days count.</b> Choose “Rest Day” or “Active Recovery” and log the day even if you do zero reps. Recovery is part of the plan.
+    </div>
+  </section>
+
+  <h2>Weekly Goals</h2>
+  <section class="grid">
+    <div class="card">
+      <div><b>Push-ups</b> <span class="muted" id="pushGoalText"></span></div>
+      <div class="progress"><div class="bar" id="pushBar"></div></div>
+    </div>
+    <div class="card">
+      <div><b>Pull-ups</b> <span class="muted" id="pullGoalText"></span></div>
+      <div class="progress"><div class="bar" id="pullBar"></div></div>
+    </div>
+    <div class="card">
+      <div><b>Running</b> <span class="muted" id="mileGoalText"></span></div>
+      <div class="progress"><div class="bar" id="mileBar"></div></div>
+    </div>
+  </section>
+
+
+  <h2>Personalized Weekly Goals</h2>
+  <section class="grid">
+    <div class="card">
+      <div class="muted">Pull-up milestone</div>
+      <div class="stat" id="pullMilestone">10</div>
+      <div class="muted" id="pullMilestoneText">Build toward 10 clean pull-ups in one set.</div>
+    </div>
+    <div class="card">
+      <div class="muted">Push-up milestone</div>
+      <div class="stat" id="pushMilestone">30</div>
+      <div class="muted" id="pushMilestoneText">Build toward 30 clean push-ups in one set.</div>
+    </div>
+    <div class="card">
+      <div class="muted">Plank milestone</div>
+      <div class="stat" id="plankMilestone">2:15</div>
+      <div class="muted" id="plankMilestoneText">Build beyond your current 2:00 max.</div>
+    </div>
+    <div class="card">
+      <div class="muted">3-mile milestone</div>
+      <div class="stat" id="runMilestone">20:30</div>
+      <div class="muted" id="runMilestoneText">Work gradually toward a faster 3-mile time.</div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <b>This week's focus</b>
+    <p id="weeklyFocus" class="muted">Log your first few workouts and the tracker will update your next milestone automatically.</p>
+  </section>
+
+  <h2>Progress History</h2>
+  <section class="card">
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Date</th><th>Workout</th><th>Push</th><th>Pull</th><th>Miles</th><th>Run</th><th>RPE</th><th></th></tr></thead>
+        <tbody id="history"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+const KEY = "rotcTrackerEntriesV1";
+const goals = { push: 400, pull: 180, miles: 12 };
+
+function entries(){ return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+function setEntries(x){ localStorage.setItem(KEY, JSON.stringify(x)); }
+
+function todayISO(){
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0,10);
+}
+document.getElementById("date").value = todayISO();
+
+function saveEntry(){
+  const e = {
+    id: Date.now(),
+    date: date.value || todayISO(),
+    workout: workout.value,
+    push: +document.getElementById("push").value || 0,
+    pull: +document.getElementById("pull").value || 0,
+    miles: +document.getElementById("miles").value || 0,
+    plank: +document.getElementById("plank").value || 0,
+    runTime: document.getElementById("runTime").value.trim(),
+    rpe: +document.getElementById("rpe").value || 0,
+    notes: document.getElementById("notes").value.trim()
+  };
+  const all = entries();
+  const existing = all.findIndex(x => x.date === e.date);
+  if(existing >= 0) all[existing] = {...all[existing], ...e};
+  else all.push(e);
+  all.sort((a,b)=>b.date.localeCompare(a.date));
+  setEntries(all);
+  render();
+  clearForm(false);
+}
+
+function clearForm(resetDate=true){
+  ["push","pull","miles","plank","runTime","rpe","notes"].forEach(id => document.getElementById(id).value = "");
+  if(resetDate) date.value = todayISO();
+}
+
+function deleteEntry(id){
+  setEntries(entries().filter(x=>x.id !== id));
+  render();
+}
+
+function clearAll(){
+  if(confirm("Delete all saved training data from this browser?")) {
+    localStorage.removeItem(KEY);
+    render();
+  }
+}
+
+function weekStart(d){
+  const x = new Date(d+"T00:00:00");
+  const day = x.getDay();
+  const diff = day === 0 ? -6 : 1-day;
+  x.setDate(x.getDate()+diff);
+  return x.toISOString().slice(0,10);
+}
+
+function render(){
+  const all = entries();
+  document.getElementById("days").textContent = all.length;
+  document.getElementById("pushTotal").textContent = all.reduce((s,x)=>s+x.push,0);
+  document.getElementById("pullTotal").textContent = all.reduce((s,x)=>s+x.pull,0);
+  document.getElementById("mileTotal").textContent = all.reduce((s,x)=>s+x.miles,0).toFixed(2);
+
+  const start = weekStart(todayISO());
+  const weekly = all.filter(x=>x.date >= start);
+  const wp = weekly.reduce((s,x)=>s+x.push,0);
+  const wpu = weekly.reduce((s,x)=>s+x.pull,0);
+  const wm = weekly.reduce((s,x)=>s+x.miles,0);
+
+  document.getElementById("pushGoalText").textContent = `${wp} / ${goals.push}`;
+  document.getElementById("pullGoalText").textContent = `${wpu} / ${goals.pull}`;
+  document.getElementById("mileGoalText").textContent = `${wm.toFixed(1)} / ${goals.miles}`;
+  document.getElementById("pushBar").style.width = Math.min(100,wp/goals.push*100)+"%";
+  document.getElementById("pullBar").style.width = Math.min(100,wpu/goals.pull*100)+"%";
+  document.getElementById("mileBar").style.width = Math.min(100,wm/goals.miles*100)+"%";
+
+  updatePersonalizedGoals(all);
+
+  const tbody = document.getElementById("history");
+  tbody.innerHTML = all.length ? all.map(x => `
+    <tr>
+      <td>${x.date}</td><td><span class="pill">${escapeHTML(x.workout)}</span></td>
+      <td>${x.push}</td><td>${x.pull}</td><td>${x.miles}</td>
+      <td>${escapeHTML(x.runTime || "-")}</td><td>${x.rpe || "-"}</td>
+      <td><button class="danger" style="width:auto;padding:6px 9px" onclick="deleteEntry(${x.id})">Delete</button></td>
+    </tr>`).join("") :
+    `<tr><td colspan="8" class="muted">No training logged yet.</td></tr>`;
+}
+
+function updatePersonalizedGoals(all){
+  // Starting benchmarks supplied by the user.
+  const basePull = 10;
+  const basePush = 30;
+  const basePlank = 120; // seconds
+  const baseRun = 1260; // 21:00
+
+  const pftEntries = all.filter(x => x.workout === "PFT Practice");
+  const maxPull = pftEntries.length ? Math.max(...pftEntries.map(x=>x.pull)) : basePull;
+  const maxPush = pftEntries.length ? Math.max(...pftEntries.map(x=>x.push)) : basePush;
+  const maxPlank = pftEntries.length ? Math.max(...pftEntries.map(x=>x.plank)) : basePlank;
+
+  // Run time is stored as mm:ss. Lower is better.
+  const parseTime = s => {
+    if(!s) return null;
+    const parts = s.split(":").map(Number);
+    if(parts.length !== 2 || parts.some(isNaN)) return null;
+    return parts[0]*60 + parts[1];
+  };
+  const runTimes = pftEntries.map(x=>parseTime(x.runTime)).filter(x=>x !== null);
+  const bestRun = runTimes.length ? Math.min(...runTimes) : baseRun;
+
+  const nextPull = nextMilestone(maxPull, [10,12,14,16,18,20]);
+  const nextPush = nextMilestone(maxPush, [30,35,40,45,50,60]);
+  const nextPlank = nextMilestone(maxPlank, [135,150,165,180,210,240]);
+  const nextRun = nextLowerMilestone(bestRun, [1260,1230,1200,1170,1140,1110,1080]);
+
+  document.getElementById("pullMilestone").textContent = nextPull;
+  document.getElementById("pullMilestoneText").textContent =
+    `Next target: ${nextPull} clean pull-ups in one set. Starting max: 8–10.`;
+
+  document.getElementById("pushMilestone").textContent = nextPush;
+  document.getElementById("pushMilestoneText").textContent =
+    `Next target: ${nextPush} clean push-ups in one set. Starting max: 20–30.`;
+
+  document.getElementById("plankMilestone").textContent = formatSeconds(nextPlank);
+  document.getElementById("plankMilestoneText").textContent =
+    `Next target after your current 2:00 max: ${formatSeconds(nextPlank)}.`;
+
+  document.getElementById("runMilestone").textContent = formatSeconds(nextRun);
+  document.getElementById("runMilestoneText").textContent =
+    `Next target after your current 21:00 3-mile: ${formatSeconds(nextRun)}.`;
+
+  const restDays = all.filter(x => x.workout === "Rest Day" || x.workout === "Active Recovery").length;
+  const trainingDays = all.filter(x => x.workout !== "Rest Day" && x.workout !== "Active Recovery").length;
+
+  let focus = `Your starting benchmarks: ${maxPull} pull-ups, ${maxPush} push-ups, ${formatSeconds(maxPlank)} plank, and ${formatSeconds(bestRun)} for 3 miles.`;
+  if(weekly.length === 0) focus += " Log this week's workouts to build your progress history.";
+  else focus += ` This week you've logged ${weekly.length} day(s), including ${weekly.filter(x => x.workout === "Rest Day" || x.workout === "Active Recovery").length} recovery day(s).`;
+  document.getElementById("weeklyFocus").textContent = focus;
+}
+
+function nextMilestone(current, milestones){
+  for(const m of milestones) if(current < m) return m;
+  return current + 2;
+}
+
+function nextLowerMilestone(current, milestones){
+  const sorted = [...milestones].sort((a,b)=>b-a);
+  for(const m of sorted) if(current > m) return m;
+  return Math.max(900, current - 30);
+}
+
+function formatSeconds(total){
+  const m = Math.floor(total/60);
+  const s = Math.round(total%60);
+  return `${m}:${String(s).padStart(2,"0")}`;
+}
+
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+render();
+</script>
+</body>
+</html>
